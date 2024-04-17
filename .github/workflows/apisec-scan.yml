@@ -1,0 +1,37 @@
+name: Fetch Repository Information
+
+# Triggers the workflow manually from the GitHub UI
+on: [workflow_dispatch]
+
+jobs:
+  fetch-repo-info:
+    # Specifies that this job runs on the latest Ubuntu environment
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Fetch repository information
+        id: repo
+        uses: actions/github-script@v6
+        with:
+          script: |
+            try {
+              // Attempt to fetch repository information using GitHub's API
+              const response = await github.rest.repos.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+              });
+              // Extract specific fields from the repository data
+              const { name, description, private: visibility } = response.data;
+              return { name, description, visibility };  // Return the structured data
+            } catch (error) {
+              // Log any errors encountered during the fetch
+              console.error("Failed to fetch repository data:", error);
+              return {};  // Return an empty object in case of an error
+            }
+
+      - name: Print repository information
+        # Uses a bash command to print the extracted repository information
+        run: |
+          echo "Repository Name: ${{ fromJson(steps.repo.outputs.result).name }}"
+          echo "Description: ${{ fromJson(steps.repo.outputs.result).description }}"
+          echo "Private: ${{ fromJson(steps.repo.outputs.result).visibility }}"
